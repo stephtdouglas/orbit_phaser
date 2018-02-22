@@ -14,6 +14,8 @@ at your command prompt. Then navigate to the URL
 in your browser.
 
 '''
+from __future__ import division, print_function, absolute_import
+
 import numpy as np
 
 from bokeh.io import curdoc
@@ -26,16 +28,16 @@ from kepio import kepio
 
 lightcurves = {}
 t840, f840, e840 = kepio("kplr011517719-2013098041711_llc.fits.txt")
-lightcurves["Kepler 840"] = {"t":t840,"f":f840,"e":e840}
+lightcurves["Kepler 840"] = {"t":np.float64(t840),"f":f840,"e":e840}
 t488, f488, e488 = kepio("kplr010904857-2013131215648_llc.fits.txt")
-lightcurves["Kepler 488"] = {"t":t488,"f":f488,"e":e488}
+lightcurves["Kepler 488"] = {"t":np.float64(t488),"f":f488,"e":e488}
 
 
 # Set up data
 s = "Kepler 840"
 x0,y = lightcurves[s]["t"],lightcurves[s]["f"]
-period = 2.0
-x = (x0 % period) / period
+current_period = np.float64(2)
+x = (x0 % current_period) / current_period
 source = ColumnDataSource(data=dict(x=x, y=y))
 
 
@@ -50,27 +52,22 @@ plot.circle('x', 'y', source=source, size=10, alpha=0.6)
 
 
 # Set up widgets
-text = TextInput(title="Period (Refine)", value="2")
-period = Slider(title="Period", value=2, start=1, end=10, step=0.0001)
-T0 = Slider(title="Time_0", value=x[0], start=x[0], end=x[100], step=x[1]-x[0])
+text = TextInput(title="Period (Refine)", value=str(current_period))
+period = Slider(title="Period", value=current_period, start=1, end=10, step=0.0001)
+# T0 = Slider(title="Time_0", value=x[0], start=x[0], end=x[100], step=x[1]-x[0])
+t = 0
 
 menu = [("Kepler 840", "Kepler 840"), ("Kepler 488", "Kepler 488")]
 star = Dropdown(label="Object", button_type="warning", menu=menu)
 
-# Set up callbacks
-def update_title(attrname, old, new):
-    plot.title.text = star.value
-
-star.on_change('value', update_title)
-
-def update_data(attrname, old, new):
+def update_from_slider(attrname, old, new):
 
     # Get the current lightcurve
     s = star.value
 
     # Get the current slider values
     p = period.value
-    t = T0.value
+    # t = T0.value
 
     # Generate the new curve
     x0, y = lightcurves[s]["t"], lightcurves[s]["f"]
@@ -79,12 +76,36 @@ def update_data(attrname, old, new):
 
     source.data = dict(x=x, y=y)
 
-for w in [star, period, T0]:
-    w.on_change('value', update_data)
+    plot.title.text = s
+
+def update_from_text(attrname, old, new):
+
+    # Get the current lightcurve
+    s = star.value
+
+    # Get the current slider values
+    p = np.float64(text.value)
+    # t = T0.value
+
+    # Generate the new curve
+    x0, y = lightcurves[s]["t"], lightcurves[s]["f"]
+    x = ((x0 - t) % p) / p
+    # y = np.sin(x0) + errs
+
+    source.data = dict(x=x, y=y)
+
+    plot.title.text = s
+
+
+
+for w in [star, period]:
+    w.on_change('value', update_from_slider)
+
+text.on_change('value',update_from_text)
 
 
 # Set up layouts and add to document
-inputs = widgetbox(text, star, period, T0)
+inputs = widgetbox(star, period, text)
 
 curdoc().add_root(row(inputs, plot, width=1000))
 curdoc().title = "Eclipse"
