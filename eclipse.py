@@ -17,7 +17,7 @@ in your browser.
 import numpy as np
 
 from bokeh.io import curdoc
-from bokeh.layouts import row, widgetbox
+from bokeh.layouts import column, row, widgetbox
 from bokeh.models import ColumnDataSource
 from bokeh.models.widgets import Slider, TextInput
 from bokeh.plotting import figure
@@ -76,8 +76,6 @@ for w in [period, T0]:
     w.on_change('value', update_data)
 
 
-# Set up layouts and add to document
-inputs = widgetbox(text, period, T0)
-
-curdoc().add_root(row(inputs, plot, width=1000))
+# # Set up layouts and add to document
+curdoc().add_root(row(plot, column(text, period, T0)))
 curdoc().title = "Eclipse"
