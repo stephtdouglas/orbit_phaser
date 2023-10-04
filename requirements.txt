@@ -1,0 +1,8 @@
+astropy
+lightkurve
+matplotlib
+numpy
+PyJWT==2.8.0
+shiny
+shinywidgets==0.2.1
+rsconnect-python
