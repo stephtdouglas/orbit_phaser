@@ -8,14 +8,18 @@ import numpy as np
 def kepio(keplcfile):
     """Read in a Kepler LC file and return the time, flux, and error"""
 
+    # print(keplcfile)
+    # print(os.path.exists(keplcfile))
+
     with fits.open(keplcfile) as hdu:
-        print(hdu.info())
+        # print(hdu.info())
 
         t = hdu[1].data["TIME"]
         f = hdu[1].data["SAP_FLUX"]
         e = hdu[1].data["SAP_FLUX_ERR"]
 
         return t,f,e
+    # return 0,0,0
 
 if __name__=="__main__":
-    t,f,e = kepio("kplr011517719-2013098041711_llc.fits.txt")
+    t,f,e = kepio("kplr011517719-2013098041711_llc.fits")

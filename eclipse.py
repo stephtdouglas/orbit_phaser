@@ -1,81 +1,55 @@
 ''' Present an interactive function explorer with slider widgets.
 
-Scrub the sliders to change the properties of the ``sin`` curve, or
-type into the title text box to update the title of the plot.
+Scrub the sliders to change the period & phase of the transiting planet. 
 
-Use the ``bokeh serve`` command to run the example by executing:
+Use the shiny command to run the example by executing:
 
-    bokeh serve eclipse.py
+    shiny run --reload eclipse.py
 
-at your command prompt. Then navigate to the URL
-
-    http://localhost:5006/eclipse
-
-in your browser.
+at your command prompt. In your browser, navigate to the URL provided.
 
 '''
+from shiny import App, render, ui
+import matplotlib.pyplot as plt
 import numpy as np
-
-from bokeh.io import curdoc
-from bokeh.layouts import column, row, widgetbox
-from bokeh.models import ColumnDataSource
-from bokeh.models.widgets import Slider, TextInput
-from bokeh.plotting import figure
 
 from kepio import kepio
 
+# Set up data
 t,f,e = kepio("kplr011517719-2013098041711_llc.fits")
-
 x0 = t
 y = f
+period_start = 2.0
 
-# Set up data
-# N = 500
-# x0 = np.linspace(0, 10*np.pi, N)
-period = 2.0
-x = (x0 % period) / period
-# errs = np.random.randn(N)*0.1
-# y = np.sin(x0) + np.sin(x0*2 + np.pi/3) + errs
-source = ColumnDataSource(data=dict(x=x, y=y))
-
-
-# Set up plot
-plot = figure(plot_height=400, plot_width=600, title="My Kepler Light Curve",
-              tools="crosshair,pan,reset,save,wheel_zoom"
-              ,x_range=[0,1]
-              # y_range=[-2.5, 2.5])
-              )
-
-plot.circle('x', 'y', source=source, size=10, alpha=0.6)
+app_ui = ui.page_fluid(
+    ui.layout_sidebar(
+        ui.panel_sidebar(
+        ui.input_slider("period", "Period", min=1, max=6, 
+                        value=period_start, step=1e-3),
+        ui.input_slider("T0", "Phase", min=0, max=1, value=0, step=1e-2),
+        ),
+        ui.panel_main(
+            ui.output_plot("my_widget"),
+        ),
+    ),
+)
 
 
-# Set up widgets
-text = TextInput(title="title", value='My Kepler Light Curve')
-period = Slider(title="period", value=2, start=1, end=5, step=0.0001)
-T0 = Slider(title="T_0", value=0, start=0, end=1, step=0.001)
+def server(input, output, session):
+    @output
+    @render.plot(alt="Kepler Data")
+    def my_widget():
+        # Get the current slider values
+        p = input.period()
+        t = input.T0()
 
-# Set up callbacks
-def update_title(attrname, old, new):
-    plot.title.text = text.value
+        # Generate the new curve
+        x = ((x0 - t) % p) / p
+        # y = np.sin(x0) + errs
 
-text.on_change('value', update_title)
+        # fig, ax = plt.subplots()
+        plt.plot(x,y,'.',alpha=0.5)
 
-def update_data(attrname, old, new):
+        # return fig
 
-    # Get the current slider values
-    p = period.value
-    t = T0.value
-
-    # Generate the new curve
-    x = ((x0 - t) % p) / p
-    # y = np.sin(x0) + errs
-
-    source.data = dict(x=x, y=y)
-
-for w in [period, T0]:
-    w.on_change('value', update_data)
-
-
-# # Set up layouts and add to document
-curdoc().add_root(row(plot, column(text, period, T0)))
-curdoc().title = "Eclipse"
+app = App(app_ui, server)
