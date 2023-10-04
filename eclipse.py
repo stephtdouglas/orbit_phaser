@@ -24,7 +24,7 @@ from bokeh.plotting import figure
 
 from kepio import kepio
 
-t,f,e = kepio("kplr011517719-2013098041711_llc.fits.txt")
+t,f,e = kepio("kplr011517719-2013098041711_llc.fits")
 
 x0 = t
 y = f
@@ -51,8 +51,8 @@ plot.circle('x', 'y', source=source, size=10, alpha=0.6)
 
 # Set up widgets
 text = TextInput(title="title", value='My Kepler Light Curve')
-period = Slider(title="period", value=2, start=1, end=3, step=0.0001)
-T0 = Slider(title="T_0", value=x[0], start=x[0], end=x[100], step=x[1]-x[0])
+period = Slider(title="period", value=2, start=1, end=5, step=0.0001)
+T0 = Slider(title="T_0", value=0, start=0, end=1, step=0.001)
 
 # Set up callbacks
 def update_title(attrname, old, new):
